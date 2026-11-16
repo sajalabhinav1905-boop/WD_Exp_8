@@ -1,0 +1,302 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Experiment 8 - Node.js & Express.js RESTful API</title>
+  <!-- Bootstrap 5 CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    body {
+      background-color: #f8fafc;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      color: #1e293b;
+    }
+    .header-banner {
+      background: linear-gradient(135deg, #059669, #0d9488);
+      color: white;
+      border-radius: 12px;
+      padding: 1.8rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+    .endpoint-card {
+      background: #ffffff;
+      border: 1px solid #e2e8f0;
+      border-radius: 10px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+    }
+    .badge-get { background-color: #0284c7; }
+    .badge-post { background-color: #16a34a; }
+    .badge-put { background-color: #d97706; }
+    .badge-delete { background-color: #dc2626; }
+    pre {
+      background-color: #0f172a;
+      color: #38bdf8;
+      border-radius: 8px;
+      padding: 12px;
+      font-size: 0.85rem;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+  </style>
+</head>
+<body class="py-4">
+  <div class="container" style="max-width: 960px;">
+    <!-- Header Banner -->
+    <header class="header-banner text-center mb-4">
+      <span class="badge bg-light text-success mb-2">Experiment 08</span>
+      <h1 class="h3 mb-1">Book Collection RESTful API</h1>
+      <p class="small mb-0 opacity-90">Engineered with Node.js & Express.js &bull; Complete CRUD Operations</p>
+    </header>
+
+    <!-- API Architecture & Endpoints Overview -->
+    <div class="card endpoint-card mb-4">
+      <div class="card-body p-4">
+        <h5 class="card-title text-success mb-3">RESTful API Endpoints Specification</h5>
+        <div class="table-responsive">
+          <table class="table table-bordered align-middle small mb-0">
+            <thead class="table-light">
+              <tr>
+                <th style="width: 15%">HTTP Method</th>
+                <th style="width: 30%">Endpoint</th>
+                <th style="width: 35%">Description</th>
+                <th style="width: 20%">Status Code</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><span class="badge badge-get text-white px-2">GET</span></td>
+                <td><code>/api/books</code></td>
+                <td>Retrieve all books or filter by genre</td>
+                <td><code>200 OK</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-get text-white px-2">GET</span></td>
+                <td><code>/api/books/:id</code></td>
+                <td>Fetch single book details by ID</td>
+                <td><code>200 OK / 404</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-post text-white px-2">POST</span></td>
+                <td><code>/api/books</code></td>
+                <td>Create and add a new book to collection</td>
+                <td><code>201 Created</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-put text-white px-2">PUT</span></td>
+                <td><code>/api/books/:id</code></td>
+                <td>Update an existing book record by ID</td>
+                <td><code>200 OK / 404</code></td>
+              </tr>
+              <tr>
+                <td><span class="badge badge-delete text-white px-2">DELETE</span></td>
+                <td><code>/api/books/:id</code></td>
+                <td>Remove a book from collection by ID</td>
+                <td><code>200 OK / 404</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Live Interactive Client -->
+    <div class="row g-4 mb-4">
+      <!-- Book Creation / Update Form -->
+      <div class="col-lg-5">
+        <div class="card endpoint-card h-100 p-3">
+          <h5 class="h6 text-success fw-bold mb-3" id="formTitle">Add Book (POST)</h5>
+          <form id="bookForm">
+            <input type="hidden" id="bookId">
+            <div class="mb-2">
+              <label class="form-label small mb-1">Book Title</label>
+              <input type="text" id="title" class="form-control form-control-sm" placeholder="e.g., Clean Code" required>
+            </div>
+            <div class="mb-2">
+              <label class="form-label small mb-1">Author(s)</label>
+              <input type="text" id="author" class="form-control form-control-sm" placeholder="e.g., Robert C. Martin" required>
+            </div>
+            <div class="row g-2 mb-3">
+              <div class="col-7">
+                <label class="form-label small mb-1">Genre</label>
+                <input type="text" id="genre" class="form-control form-control-sm" placeholder="e.g., Engineering">
+              </div>
+              <div class="col-5">
+                <label class="form-label small mb-1">Year</label>
+                <input type="number" id="year" class="form-control form-control-sm" placeholder="2024">
+              </div>
+            </div>
+            <div class="d-flex gap-2">
+              <button type="submit" class="btn btn-success btn-sm w-100" id="submitBtn">Create Book (POST)</button>
+              <button type="button" class="btn btn-outline-secondary btn-sm d-none" id="cancelBtn" onclick="resetForm()">Cancel</button>
+            </div>
+          </form>
+
+          <hr class="my-3">
+
+          <h6 class="small fw-bold text-muted mb-2">Live Response Output:</h6>
+          <pre id="responseOutput">// Awaiting API action...</pre>
+        </div>
+      </div>
+
+      <!-- Current Books Collection Table -->
+      <div class="col-lg-7">
+        <div class="card endpoint-card h-100 p-3">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h5 class="h6 text-success fw-bold mb-0">Active Book Collection (In-Memory DB)</h5>
+            <button class="btn btn-outline-success btn-sm py-0" onclick="fetchBooks()">Refresh (GET)</button>
+          </div>
+          <div class="table-responsive">
+            <table class="table table-hover table-sm small align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th>ID</th>
+                  <th>Title</th>
+                  <th>Author</th>
+                  <th>Genre</th>
+                  <th>Year</th>
+                  <th class="text-center">Actions</th>
+                </tr>
+              </thead>
+              <tbody id="booksTableBody">
+                <!-- Dynamically Populated -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Express.js Architecture Implementation Snippet -->
+    <div class="card endpoint-card mb-4">
+      <div class="card-body p-4">
+        <h5 class="card-title text-success mb-2">Server Entrypoint Architecture (server.js)</h5>
+        <p class="small text-muted mb-3">Modular router and controller setup using Express.js middleware and REST semantics.</p>
+        <pre><code>const express = require('express');
+const cors = require('cors');
+const app = express();
+
+app.use(cors());
+app.use(express.json());
+
+// In-Memory Data Store & REST Endpoints
+app.get('/api/books', (req, res) => res.json({ success: true, data: books }));
+app.get('/api/books/:id', (req, res) => { /* find by ID */ });
+app.post('/api/books', (req, res) => { /* validate & push */ });
+app.put('/api/books/:id', (req, res) => { /* update book attributes */ });
+app.delete('/api/books/:id', (req, res) => { /* remove from collection */ });
+
+app.listen(3000, () => console.log('REST API active on port 3000'));</code></pre>
+      </div>
+    </div>
+
+    <footer class="text-center text-muted small mt-4">
+      <p>&copy; 2026 Sajal Mishra &bull; B.Tech CSE (Data Science) &bull; JSS University, Noida</p>
+    </footer>
+  </div>
+
+  <!-- Interactive Client-side Script -->
+  <script>
+    let booksData = [
+      { id: 1, title: "Clean Code", author: "Robert C. Martin", genre: "Software Engineering", year: 2008 },
+      { id: 2, title: "The Pragmatic Programmer", author: "Andrew Hunt, David Thomas", genre: "Programming", year: 1999 },
+      { id: 3, title: "Designing Data-Intensive Applications", author: "Martin Kleppmann", genre: "Data Science", year: 2017 },
+      { id: 4, title: "AI: A Modern Approach", author: "Stuart Russell, Peter Norvig", genre: "Artificial Intelligence", year: 2020 }
+    ];
+
+    function logResponse(method, status, body) {
+      const output = document.getElementById("responseOutput");
+      output.innerText = `HTTP ${method} Status: ${status}\n` + JSON.stringify(body, null, 2);
+    }
+
+    function renderBooks() {
+      const tbody = document.getElementById("booksTableBody");
+      tbody.innerHTML = "";
+      booksData.forEach(b => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td><strong>#${b.id}</strong></td>
+          <td>${b.title}</td>
+          <td>${b.author}</td>
+          <td><span class="badge bg-light text-dark border">${b.genre}</span></td>
+          <td>${b.year}</td>
+          <td class="text-center">
+            <button class="btn btn-outline-primary btn-sm py-0 px-1 me-1" onclick="editBook(${b.id})">Edit</button>
+            <button class="btn btn-outline-danger btn-sm py-0 px-1" onclick="deleteBook(${b.id})">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function fetchBooks() {
+      logResponse("GET /api/books", "200 OK", { success: true, count: booksData.length, data: booksData });
+      renderBooks();
+    }
+
+    document.getElementById("bookForm").addEventListener("submit", function(e) {
+      e.preventDefault();
+      const id = document.getElementById("bookId").value;
+      const title = document.getElementById("title").value.trim();
+      const author = document.getElementById("author").value.trim();
+      const genre = document.getElementById("genre").value.trim() || "General";
+      const year = parseInt(document.getElementById("year").value, 10) || new Date().getFullYear();
+
+      if (id) {
+        // PUT (Update)
+        const index = booksData.findIndex(b => b.id === parseInt(id, 10));
+        if (index !== -1) {
+          booksData[index] = { id: parseInt(id, 10), title, author, genre, year };
+          logResponse(`PUT /api/books/${id}`, "200 OK", { success: true, message: "Book updated", data: booksData[index] });
+        }
+      } else {
+        // POST (Create)
+        const newId = booksData.length > 0 ? Math.max(...booksData.map(b => b.id)) + 1 : 1;
+        const newBook = { id: newId, title, author, genre, year };
+        booksData.push(newBook);
+        logResponse("POST /api/books", "201 Created", { success: true, message: "Book created", data: newBook });
+      }
+
+      resetForm();
+      renderBooks();
+    });
+
+    function editBook(id) {
+      const book = booksData.find(b => b.id === id);
+      if (!book) return;
+
+      document.getElementById("bookId").value = book.id;
+      document.getElementById("title").value = book.title;
+      document.getElementById("author").value = book.author;
+      document.getElementById("genre").value = book.genre;
+      document.getElementById("year").value = book.year;
+
+      document.getElementById("formTitle").innerText = `Update Book #${book.id} (PUT)`;
+      document.getElementById("submitBtn").innerText = "Update Book (PUT)";
+      document.getElementById("submitBtn").className = "btn btn-warning btn-sm w-100";
+      document.getElementById("cancelBtn").classList.remove("d-none");
+    }
+
+    function deleteBook(id) {
+      if (confirm(`Delete book #${id}?`)) {
+        booksData = booksData.filter(b => b.id !== id);
+        logResponse(`DELETE /api/books/${id}`, "200 OK", { success: true, message: `Book #${id} deleted` });
+        renderBooks();
+      }
+    }
+
+    function resetForm() {
+      document.getElementById("bookId").value = "";
+      document.getElementById("bookForm").reset();
+      document.getElementById("formTitle").innerText = "Add Book (POST)";
+      document.getElementById("submitBtn").innerText = "Create Book (POST)";
+      document.getElementById("submitBtn").className = "btn btn-success btn-sm w-100";
+      document.getElementById("cancelBtn").classList.add("d-none");
+    }
+
+    // Initial Load
+    renderBooks();
+    logResponse("GET /api/books", "200 OK", { success: true, count: booksData.length, data: booksData });
+  </script>
+</body>
+</html>

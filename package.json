@@ -1,0 +1,16 @@
+{
+  "name": "book-collection-rest-api",
+  "version": "1.0.0",
+  "description": "Experiment 8 - Node.js and Express.js RESTful API for managing a book collection",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "keywords": ["nodejs", "express", "rest-api", "crud", "books"],
+  "author": "Sajal Mishra",
+  "license": "MIT",
+  "dependencies": {
+    "express": "^4.19.2",
+    "cors": "^2.8.5"
+  }
+}
